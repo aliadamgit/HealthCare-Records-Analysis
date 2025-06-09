@@ -1,10 +1,15 @@
 # HealthCare-Records-Analysis
 HealthCare Records Analysis with Microsoft Fabric
 
+![Copy of End-to-End Microsoft Fabric Project using Medallion Architecture ](https://github.com/user-attachments/assets/2a2a0a32-7367-400f-86ac-51e1ba9948b0)
+
+
 ## Exective Summary 
 
 ![image](https://github.com/user-attachments/assets/cd6c6233-4e12-4cbd-b569-be412ff86bef)
 
+
+## The pipeline for loading the data from Azure sql database into Bronze lakehouse 
 
 
 ![image](https://github.com/user-attachments/assets/1feef0db-e536-443f-aa09-f1900c5a8724)
