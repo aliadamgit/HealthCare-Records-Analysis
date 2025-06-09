@@ -1,6 +1,11 @@
 # HealthCare-Records-Analysis
 HealthCare Records Analysis with Microsoft Fabric
 
+## Exective Summary 
+
+![image](https://github.com/user-attachments/assets/cd6c6233-4e12-4cbd-b569-be412ff86bef)
+
+
 
 ![image](https://github.com/user-attachments/assets/1feef0db-e536-443f-aa09-f1900c5a8724)
 
@@ -274,6 +279,169 @@ df_procedures3.write.format("delta")\
             .saveAsTable("SilverLH.fact_procedures")
 ```
 
+## Dim Date Table
+
+```python
+# Dim Date Table
+from pyspark.sql import *
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+```
+
+```sql
+%%sql
+DROP TABLE IF EXISTS SilverLH.dim_date;
+CREATE TABLE IF NOT EXISTS SilverLH.dim_date
+(
+    CalendarDate Date,
+    DateKey int,
+    YearId int,
+    MonthId int,
+    DayId int,
+    Quarter int,
+    ShortDay VARCHAR(3),
+    MonthName VARCHAR(12)
+) USING DELTA
+PARTITIONED BY (YearId)
+```
+
+```sql
+%%sql
+SELECT min(BIRTHDATE) from dim_patients;
+```
+![image](https://github.com/user-attachments/assets/92e40ba0-5ffa-4411-b382-63ee3c45e2f7)
+
+```python
+start_date = '1922-01-01'
+end_date   = '2024-12-31'
+date_diff = spark.sql("select date_diff('{}','{}')".format(end_date,start_date)).first()[0]
+display(date_diff)
+```
+
+```python
+ID_data = spark.range(0,date_diff)
+```
+
+```python
+date_data = ID_data.selectExpr("date_add('{}', cast(id as int)) as CalendarDate".format(start_date))
+display(date_data.head(2))
+```
+![image](https://github.com/user-attachments/assets/697073fd-7486-43ce-938c-873121430d51)
+
+```python
+date_data.createOrReplaceTempView("DateView")
+```
+
+```sql
+%%sql
+insert into SilverLH.dim_date
+SELECT*,
+concat( year(CalendarDate) , concat(right (cast( 100 +  month(CalendarDate)  as char(3)),2) ,right (cast( 100 +  day(CalendarDate)  as char(3)),2) ) ) DateKey,
+year(CalendarDate) as YearId,
+month(CalendarDate) as MonthId,
+Day(CalendarDate)   as DayId,
+quarter(CalendarDate) as Quarter,
+date_format(CalendarDate, 'EEE') as ShortDay,
+date_format(CalendarDate, 'MMM') as MonthName
+FROM DateView
+```
+
+```sql
+%%sql
+select count(*) from SilverLH.dim_date -- limit 5
+```
+![image](https://github.com/user-attachments/assets/dfa7e125-e627-40c7-9016-9ac6efd811f2)
+
+## 1. Import fact_encounters Table
+We used T-SQL for loading data from silver lakehouse to gold data warehouse 
+
+```sql
+-- Dim dim_payers
+SELECT TOP 2 [Id],
+			[START],
+			[STOP],
+			[PATIENT],
+			[PAYER],
+			[CODE],
+			[DESCRIPTION],
+			[BASE_ENCOUNTER_COST],
+			[TOTAL_CLAIM_COST],
+			[PAYER_COVERAGE],
+			[class_id]
+from SilverLH.dbo.fact_encounters;
+```
+
+![image](https://github.com/user-attachments/assets/c1a2314e-e9db-4217-b16a-46620be7e792)
+
+## 2. Create Temp Table
+
+```sql
+IF object_id('DWH.gold.fact_encounters_new', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE DWH.gold.fact_encounters_new;
+END
+CREATE TABLE DWH.gold.fact_encounters_new as 
+SELECT      [Id],
+			[START],
+			[STOP],
+			[PATIENT],
+			[PAYER],
+			[CODE],
+			[DESCRIPTION],
+			[BASE_ENCOUNTER_COST],
+			[TOTAL_CLAIM_COST],
+			[PAYER_COVERAGE],
+			[class_id]
+from SilverLH.dbo.fact_encounters;
+```
+
+## 3. Validate New Temp Table
+
+```sql
+SELECT TOP 2 * from DWH.gold.fact_encounters_new;
+```
+
+![image](https://github.com/user-attachments/assets/8433aebd-2030-4c2e-a8ea-2c56828133a2)
+
+## 4. Swap new table to Production
+
+```sql
+IF object_id('DWH.gold.fact_encounters', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE DWH.gold.fact_encounters;
+END
+CREATE TABLE DWH.gold.fact_encounters as 
+SELECT * from DWH.gold.fact_encounters_new;
+```
+
+## 5. Validate Production table
+
+```python
+ SELECT TOP 3 * from DWH.gold.fact_encounters;
+```
+
+![image](https://github.com/user-attachments/assets/fcf517b4-225e-4ee5-bc3e-8afb420c4e5a)
+
+## 6. Clean Up the temp table
+
+```python
+IF object_id('DWH.gold.fact_encounters_new', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE DWH.gold.fact_encounters_new;
+END
+```
+
+## The Silver Lakehouse after Transformation 
+
+![image](https://github.com/user-attachments/assets/7a145407-56b1-45d8-8db7-50ea6910991e)
+
+And applay the same logic for all the other tables to form the data warehouse 
+
+![image](https://github.com/user-attachments/assets/52eaa36b-d0de-40df-95dc-094a718c48af)
+
+## Design the data model 
+
+![image](https://github.com/user-attachments/assets/a25bbec8-e735-4b14-b92e-3faa7df574ab)
 
 
 
