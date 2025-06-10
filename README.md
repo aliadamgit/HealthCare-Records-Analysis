@@ -12,6 +12,8 @@ HealthCare Records Analysis with Microsoft Fabric
 ## Data Source
 
 This data was collected from Maven Analytics as [Hospital Patients Records](https://mavenanalytics.io/data-playground?order=date_added%2Cdesc&search=hospital%20patient%20records)  
+It includes 75,592 records
+Synthetic data concerning approximately 1,000 patients from Massachusetts General Hospital spanning the years 2011 to 2022, which includes details on patient demographics, insurance coverage, as well as medical encounters and procedures.
 
 ## The pipeline for loading the data from Azure sql database into Bronze lakehouse 
 
