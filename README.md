@@ -9,6 +9,10 @@ HealthCare Records Analysis with Microsoft Fabric
 ![image](https://github.com/user-attachments/assets/cd6c6233-4e12-4cbd-b569-be412ff86bef)
 
 
+## Data Source
+
+This data was collected from Maven Analytics as [Hospital Patients Records](https://mavenanalytics.io/data-playground?order=date_added%2Cdesc&search=hospital%20patient%20records)  
+
 ## The pipeline for loading the data from Azure sql database into Bronze lakehouse 
 
 
